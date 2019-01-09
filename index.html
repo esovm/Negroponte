@@ -1,15 +1,60 @@
 <HTML>
-<HEAD><TITLE>Negroponte</TITLE></HEAD>
+<HEAD>
+<TITLE>Negroponte</TITLE>
+<STYLE>
+tr td:last-child{
+    white-space:nowrap;
+}
+</STYLE>
+</HEAD>
 <BODY bgcolor=#DEEEEE>
 
 <CENTER>
 <H1>Negroponte</H1>
 
-<hr width=100%>
-<div align=right><font size=2>
+<TABLE border="1" style="table-layout: auto !important;width:800px;height:600px;">
+    <TR>
+        <TD rowspan="3" valign="top">
+            <TEXTAREA id="bfasm" rows="25" cols="80" style="resize:none;background:#000000;color:#ffffff;overflow-wrap:normal;font-family:'Courier New', Courier, monospace;color:yellow;" spellcheck="false"></TEXTAREA>
+        </TD>
+        
+        <TD valign="top">
+            <TEXTAREA id="stats" cols="30" rows="2" style="resize:none;background:#000000;color:#ffffff;overflow-wrap:normal;font-family:'Courier New', Courier, monospace;color:yellow;" spellcheck="false" readonly></TEXTAREA>
+        </TD>
+    </TR>
+    <TR>
+        <TD valign="top" id="regs">
+            R1: 0<BR>
+            R2: 0<BR>
+            R3: 0<BR>
+            R4: 0<BR>
+            PC: 0<BR>
+        </TD>
+    </TR>
+    
+    <TR>
+        <TD valign="top">
+            SP: 0<BR>
+            []
+        </TD>
+    </TR>
+</TABLE>
+
+<HR width=100%>
+<DIV align=right><FONT size=2>
 Online asm2bfv1 debugger.
-<i>Copyright (C) by Krzysztof Palaiologos Szewczyk, Dec 2018 - Jan 2019</i></font></div>
+<I>Copyright (C) by Krzysztof Palaiologos Szewczyk, Dec 2018 - Jan 2019</I></FONT></DIV>
 </CENTER>
+
+<SCRIPT>
+
+$ = function(x) {
+    return document.getElementById(x);
+}
+
+$('stats').value = "Assembly: 0 bytes\nBrainfuck: 0 bytes\nCompressed: 0 bytes";
+
+</SCRIPT>
 
 </BODY>
 </HTML>
