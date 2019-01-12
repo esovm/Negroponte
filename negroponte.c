@@ -32,7 +32,8 @@ void tick() {
                 loop++;
             }
         }
-    }
+    } else if (c == '!' && c == '@' || c == '#')
+        ++ip;
     
     ++ip;
 }
@@ -98,22 +99,22 @@ int negroponte(void) {
                      " * ilasm - inline assembly"
                      "Use `about [command]` to show detailed usage information.");
             } else if(!strcmp(token, "regs")) {
-                printf("G = %d\n", mem[0]);
-                printf("IP = %d\n", mem[1]);
-                printf("T0 = %d\n", mem[2]);
-                printf("T1 = %d\n", mem[3]);
-                printf("T2 = %d\n", mem[4]);
-                printf("R1 = %d\n", mem[5]);
-                printf("R2 = %d\n", mem[6]);
-                printf("R3 = %d\n", mem[7]);
-                printf("R4 = %d\n", mem[8]);
-                printf("IM = %d\n", mem[9]);
-                printf("T3 = %d\n", mem[10]);
-                printf("T4 = %d\n", mem[11]);
-                printf("T5 = %d\n", mem[12]);
-                printf("T6 = %d\n", mem[13]);
-                printf("T7 = %d\n", mem[14]);
-                printf("A = %d\n", mem[16]);
+                printf("G = %d\n", memory[0]);
+                printf("IP = %d\n", memory[1]);
+                printf("T0 = %d\n", memory[2]);
+                printf("T1 = %d\n", memory[3]);
+                printf("T2 = %d\n", memory[4]);
+                printf("R1 = %d\n", memory[5]);
+                printf("R2 = %d\n", memory[6]);
+                printf("R3 = %d\n", memory[7]);
+                printf("R4 = %d\n", memory[8]);
+                printf("IM = %d\n", memory[9]);
+                printf("T3 = %d\n", memory[10]);
+                printf("T4 = %d\n", memory[11]);
+                printf("T5 = %d\n", memory[12]);
+                printf("T6 = %d\n", memory[13]);
+                printf("T7 = %d\n", memory[14]);
+                printf("A = %d\n", memory[16]);
             } else if(!strcmp(token, "cell")) {
                 int x;
                 scanf("%d", &x);
@@ -122,8 +123,9 @@ int negroponte(void) {
                 int x, i;
                 scanf("%d", &x);
                 for(i = 17; i < x/2; i += 2) {
-                    printf("mem[bp%c%d]=%d", i-17>0?'+':'', i-17, mem[i]);
+                    printf("mem[bp%c%d]=%d", i-17>0?'+':']', i-17, memory[i]);
                 }
+                putchar('\n');
             } else if(!strcmp(token, "bf")) {
                 printf("MP = %d\n", ptr - memory);
                 printf("IP = %d\n", ip);
@@ -146,7 +148,7 @@ int negroponte(void) {
                     char * cp = memory;
                     cp += a;
                     putchar('[');
-                    for(c1 = 0, c1 < b; c1++) {
+                    for(c1 = 0; c1 < b; c1++) {
                         printf("%d%s", memory[c1], c1+1==b?"":", ");
                     }
                     puts("]");
@@ -161,7 +163,7 @@ int negroponte(void) {
                 tick();
             break;
         } else if(!strcmp(token, "step")) {
-            while(code[ip] != '!')
+            while(code[ip] != '!' && code[ip] != 0)
                 tick();
         } else if(!strcmp(token, "continue")) {
             if(!breakpoints) {
@@ -187,7 +189,7 @@ int negroponte(void) {
         } else if(!strcmp(token, "ilasm")) {
             puts("WIP!");
         } else if(!strcmp(token, "load")) {
-            fgets(token, 63, stdin);
+            scanf("%s", token);
             filename = token;
             load();
         } else if(!strcmp(token, "quit")) {
@@ -199,7 +201,8 @@ int negroponte(void) {
             ptr = memory = malloc(65536);
             filename = NULL;
         } else if(!strcmp(token, "about")) {
-            fgets(token, 63, stdin);
+            scanf("%s", token);
+            token++;
             if(!strcmp(token, "reset")) {
                 puts("Usage: reset");
             } else if(!strcmp(token, "about")) {
@@ -229,6 +232,7 @@ int negroponte(void) {
             } else {
                 puts("Unknown command.");
             }
+            token--;
         } else {
             puts("Unknown command.");
         }
