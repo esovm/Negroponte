@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char * filename = NULL, * code = NULL, * memory = NULL, breakpoints = 0;
+char * filename = NULL, * code = NULL, * memory = NULL, *ptr = NULL, breakpoints = 0;
 int ip = 0;
 
 void tick() {
@@ -11,18 +11,18 @@ void tick() {
 
     c = code[ip];
     if (c == '>') {
-        ++memory;
+        ++ptr;
     } else if (c == '<') {
-        --memory;
+        --ptr;
     } else if (c == '+') {
-        ++*memory;
+        ++*ptr;
     } else if (c == '-') {
-        --*memory;
+        --*ptr;
     } else if (c == '.' ) {
-        putchar(*memory);
+        putchar(*ptr);
     } else if (c == ',') {
-        *memory = getchar();
-    } else if (c == ']' && *memory) {
+        *ptr = getchar();
+    } else if (c == ']' && *ptr) {
         loop = 1;
         while (loop > 0) {
             c = code[--ip];
@@ -69,6 +69,7 @@ void load(void) {
 
 int negroponte(void) {
     char * token = malloc(64);
+    ptr = memory = malloc(65536);
     
     if(filename != NULL) {
         printf("Loading %s.\n", filename);
@@ -80,7 +81,81 @@ int negroponte(void) {
         scanf("%s", token);
         
         if(!strcmp(token, "show")) {
-            
+            scanf("%s", token);
+            if(!strcmp(token, "help")) {
+                puts("Negroponte - help\n"
+                     "Basic commands:\n"
+                     " * show - display contents of something\n"
+                     " * run - run application until @ or NUL is found, and exit.\n"
+                     " * step - run until next asm2bfv1 instruction.\n"
+                     " * continue - if breakpoints enabled, run until # or NUL is found.\n"
+                     " * tick - execute one brainfuck instruction.\n"
+                     " * breakpoints - turn on or off breakpoints.\n"
+                     " * trace - load corresponding assembly and trace currently executed line.\n"
+                     " * load - load specified file. Passing as CLI parameter is also allowed.\n"
+                     " * quit - exit Negroponte\n"
+                     " * reset - clear memory and code.\n"
+                     " * ilasm - inline assembly"
+                     "Use `about [command]` to show detailed usage information.");
+            } else if(!strcmp(token, "regs")) {
+                printf("G = %d\n", mem[0]);
+                printf("IP = %d\n", mem[1]);
+                printf("T0 = %d\n", mem[2]);
+                printf("T1 = %d\n", mem[3]);
+                printf("T2 = %d\n", mem[4]);
+                printf("R1 = %d\n", mem[5]);
+                printf("R2 = %d\n", mem[6]);
+                printf("R3 = %d\n", mem[7]);
+                printf("R4 = %d\n", mem[8]);
+                printf("IM = %d\n", mem[9]);
+                printf("T3 = %d\n", mem[10]);
+                printf("T4 = %d\n", mem[11]);
+                printf("T5 = %d\n", mem[12]);
+                printf("T6 = %d\n", mem[13]);
+                printf("T7 = %d\n", mem[14]);
+                printf("A = %d\n", mem[16]);
+            } else if(!strcmp(token, "cell")) {
+                int x;
+                scanf("%d", &x);
+                printf("mem[%d] = %d\n", x, memory[x]);
+            } else if(!strcmp(token, "stack")) {
+                int x, i;
+                scanf("%d", &x);
+                for(i = 17; i < x/2; i += 2) {
+                    printf("mem[bp%c%d]=%d", i-17>0?'+':'', i-17, mem[i]);
+                }
+            } else if(!strcmp(token, "bf")) {
+                printf("MP = %d\n", ptr - memory);
+                printf("IP = %d\n", ip);
+            } else if(!strcmp(token, "code")) {
+                int a, b, c1, c2;
+                scanf("%s", token);
+                sscanf(token, "%d%c%c%d", &a, &c1, &c2, &b);
+                if(c1 == c2 && c1 == '.') {
+                    char * cp = code;
+                    cp += a;
+                    fwrite(cp, 1, b, stdout);
+                } else {
+                    puts("Expected range, usage: show code [range, eg. 1..4, 3..5]");
+                }
+            } else if(!strcmp(token, "memory")) {
+                int a, b, c1, c2;
+                scanf("%s", token);
+                sscanf(token, "%d%c%c%d", &a, &c1, &c2, &b);
+                if(c1 == c2 && c1 == '.') {
+                    char * cp = memory;
+                    cp += a;
+                    putchar('[');
+                    for(c1 = 0, c1 < b; c1++) {
+                        printf("%d%s", memory[c1], c1+1==b?"":", ");
+                    }
+                    puts("]");
+                } else {
+                    puts("Expected range, usage: show memory [range, eg. 1..4, 3..5]");
+                }
+            } else {
+                puts("No such property.");
+            }
         } else if(!strcmp(token, "run")) {
             while(code[ip] != '@' && code[ip] != 0)
                 tick();
@@ -90,11 +165,11 @@ int negroponte(void) {
                 tick();
         } else if(!strcmp(token, "continue")) {
             if(!breakpoints) {
-                puts("Error: Breakpoints are not enabled!");
+                puts(" *** Error: Breakpoints are not enabled!");
                 continue;
             }
             
-            while(code[ip] != '#')
+            while(code[ip] != '#' && code[ip] != 0)
                 tick();
         } else if(!strcmp(token, "tick")) {
             tick();
@@ -105,10 +180,12 @@ int negroponte(void) {
             } else if(!strcmp(token, "off")) {
                 breakpoints = 0;
             } else {
-                puts("Expected form: breakpoints [on|off]\n");
+                puts("Expected form: breakpoints [on|off]");
             }
         } else if(!strcmp(token, "trace")) {
-            
+            puts("WIP!");
+        } else if(!strcmp(token, "ilasm")) {
+            puts("WIP!");
         } else if(!strcmp(token, "load")) {
             fgets(token, 63, stdin);
             filename = token;
@@ -116,18 +193,61 @@ int negroponte(void) {
         } else if(!strcmp(token, "quit")) {
             break;
         } else if(!strcmp(token, "reset")) {
-            code = NULL;
+            free(code);
+            free(memory);
+            
+            ptr = memory = malloc(65536);
             filename = NULL;
+        } else if(!strcmp(token, "about")) {
+            fgets(token, 63, stdin);
+            if(!strcmp(token, "reset")) {
+                puts("Usage: reset");
+            } else if(!strcmp(token, "about")) {
+                puts("Usage: about [command]");
+            } else if(!strcmp(token, "help")) {
+                puts("Usage: help");
+            } else if(!strcmp(token, "quit")) {
+                puts("Usage: quit");
+            } else if(!strcmp(token, "trace")) {
+                puts("Usage: trace");
+            } else if(!strcmp(token, "load")) {
+                puts("Usage: load [filename]");
+            } else if(!strcmp(token, "breakpoints")) {
+                puts("Usage: breakpoints [off|on] (default: on)");
+            } else if(!strcmp(token, "tick")) {
+                puts("Usage: tick");
+            } else if(!strcmp(token, "continue")) {
+                puts("Usage: continue");
+            } else if(!strcmp(token, "step")) {
+                puts("Usage: step");
+            } else if(!strcmp(token, "run")) {
+                puts("Usage: run");
+            } else if(!strcmp(token, "ilasm")) {
+                puts("Usage: ilasm");
+            } else if(!strcmp(token, "show")) {
+                puts("Usage: show [help|stack (amount)|regs|cell (id)|bf|memory (range, eg. 0..2, 4..6)|code (range, eg. 0..2, 4..6)]");
+            } else {
+                puts("Unknown command.");
+            }
         } else {
-            puts("Unknown command.\n");
+            puts("Unknown command.");
         }
     }
     
     free(token);
+    free(code);
+    free(memory);
+    
+    return 0;
 }
 
 int main(int argc, char * argv[]) {
-    puts("Negroponte 1.0\nCopyright (C) 2019 Krzysztof Palaiologos Szewczyk.\nMIT License.\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\nFor help, type \"show help\"\n");
+    puts("Negroponte 1.0\n"
+         "Copyright (C) 2019 Krzysztof Palaiologos Szewczyk.\n"
+         "MIT License.\n"
+         "This is free software: you are free to change and redistribute it.\n"
+         "There is NO WARRANTY, to the extent permitted by law.\n"
+         "For help, type \"show help\"");
     
     if(argc == 2) {
         filename = argv[1];
